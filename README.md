@@ -1,162 +1,143 @@
-# Lovelace HTML Jinja2 Template card
+# HTML Jinja2 Template card
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/custom-components/hacs)
-[![Community Forum](https://img.shields.io/badge/community-forum-brightgreen.svg?style=popout)](https://community.home-assistant.io/t/html-jinja2-template-card/134550)<!-- piotrmachowski_support_badges_start -->
-[![Ko-Fi][ko_fi_shield]][ko_fi]
-[![buycoffee.to][buycoffee_to_shield]][buycoffee_to]
-[![PayPal.Me][paypal_me_shield]][paypal_me]
-[![Revolut.Me][revolut_me_shield]][revolut_me]
-<!-- piotrmachowski_support_badges_end -->
+A Home Assistant dashboard card that renders a Jinja2 template as HTML. The
+template is rendered by Home Assistant's own template engine, the same one
+behind Developer tools, and the server pushes a new result whenever any
+entity the template reads changes. This is a maintained fork of the original
+card by PiotrMachowski, rebuilt on Lit 3 with a correct subscription
+lifecycle, an HTML sanitiser, Sections support, and a visual editor.
 
-This card displays provided Jinja2 template as an HTML content of a card. It uses exactly the same engine as Home Assistant in *Developer tools*.
+## Installation
 
-## Configuration options
+The card is distributed through HACS as a custom repository.
 
-| Key | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `title` | `string` | `false` | - | Title of a card |
-| `content` | `string` | `true` | - | Content of a card |
-| `ignore_line_breaks` | `boolean` | `false` | `false` | Disables changing line breaks to `</br>` tags |
-| `do_not_parse` | `boolean` | `false` | `false` | Disables template parsing |
-| `always_update` | `boolean` | `false` | `false` | Enables refreshing the card with every change of entity |
-| `picture_elements_mode` | `boolean` | `false` | `false` | Enables picture-elements mode |
-| `entities` | `list` | `false` | `[]` | List of additional entities whose updates should trigger refresh of the card |
+[![Open your Home Assistant instance and add this repository to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=trooperthorn&repository=ha_card_HTML-Jinja2-Template&category=plugin)
 
-### Templates
+1. In HACS, open the menu, choose Custom repositories, and add
+   `https://github.com/trooperthorn/ha_card_HTML-Jinja2-Template` with the
+   category Dashboard.
+2. Download the card. HACS registers the resource automatically when the
+   dashboard resource mode is storage.
+3. If the resource is not registered, add it under Settings, Dashboards,
+   Resources:
 
- * Entity state, example: `{{ states('sun.sun') }}`
- * Entity attribute, example: `{{ state_attr('sun.sun', 'elevation') }]`
- * Detailed documentation: [*Templating*](https://www.home-assistant.io/docs/configuration/templating/)
- 
-## Example usage
+   ```yaml
+   url: /hacsfiles/ha_card_HTML-Jinja2-Template/html-template-card.js
+   type: module
+   ```
 
-![Example](https://github.com/PiotrMachowski/Home-Assistant-Lovelace-HTML-Jinja2-Template-card/raw/master/example.gif)
+4. Hard refresh the browser.
 
+### Switching from the upstream install
+
+The element name is still `html-template-card`, so existing dashboards do not
+need any edit. Add this repository in HACS and download it, confirm the new
+resource row exists, then remove the upstream repository in HACS so its
+resource row is removed as well, and hard refresh. Remove the upstream entry
+before verifying, because whichever resource loads first defines the element.
+The full procedure and its checks are in `docs/operations.md`.
+
+## Configuration
+
+| Key | Type | Default | Description |
+| --- | --- | --- | --- |
+| `content` | string | required | The Jinja2 template. Its rendered output is inserted as HTML. |
+| `title` | string | none | Card title, inserted as text. |
+| `entities` | list | none | Entity ids passed to the server as `entity_ids`, for templates whose dependencies the engine cannot detect (loops, `expand`, `states` filtered by attribute). |
+| `variables` | map | none | Extra variables available in the template. `config` (the card configuration) and `user` (the viewing user's name) are always set. |
+| `strict` | boolean | `true` | Strict rendering: an undefined variable is an error instead of an empty string. |
+| `report_errors` | boolean | `false` | Show template errors in the card. Always on while the card is previewed in the editor. |
+| `timeout` | number | server default | Render timeout in seconds, passed through to the server. |
+| `line_breaks` | boolean | `false` | Insert `<br>` for each newline in the rendered result, outside tags and `<style>` blocks. |
+| `ignore_line_breaks` | boolean | `true` | Accepted for compatibility with the upstream card. Newlines are never rewritten unless `line_breaks` is set. |
+| `do_not_parse` | boolean | `false` | Render `content` as-is without a template subscription. |
+| `allow_unsafe_html` | boolean | `false` | Disable the sanitiser. See Security. |
+| `shadow` | boolean | `false` | Render into a shadow root so the card's `<style>` cannot leak into the view. Off by default so existing styling and card-mod paths keep working. |
+| `no_card` | boolean | `false` | Render a bare `div` instead of `ha-card`, for picture-elements and other embedded uses. |
+| `picture_elements_mode` | boolean | `false` | Alias of `no_card`. |
+| `theme` | string | none | Apply a theme from `hass.themes` to this card only. |
+| `always_update` | boolean | ignored | Accepted for compatibility and ignored with one console warning. The server already pushes every change the template depends on. |
+
+The card frame padding is `--html-template-card-padding` (default `16px`). The
+title uses the `card-header` class.
+
+### Templates and variables
+
+Anything that works in Developer tools works here: `{{ states('sun.sun') }}`,
+`{{ state_attr('sun.sun', 'elevation') }}`, `{% if %}` blocks, filters, and
+`expand`. The template runs on the server with the viewing user's
+permissions. `variables.config` holds the card's own configuration and
+`variables.user` the user's display name. Any key under `variables:` in the
+configuration is merged in as well. See the Home Assistant
+[templating documentation](https://www.home-assistant.io/docs/configuration/templating/).
+
+## Security
+
+The rendered result is HTML built partly from entity state, and Home
+Assistant templates do not escape interpolated values. By default the card
+passes the result through a DOMPurify profile that keeps normal markup,
+`<style>`, `class`, inline `style`, and the `ha-icon`, `ha-svg-icon`, and
+`ha-alert` elements, and removes `<script>`, event-handler attributes,
+`javascript:` URLs, frames, objects, embeds, and forms. `allow_unsafe_html:
+true` turns that off and is the operator's responsibility. The threat model
+and the exact profile are in `docs/security.md`.
+
+## Examples
+
+A card with an icon and a state:
 
 ```yaml
-views:
-- name: Example
-  cards:
-    - type: custom:html-template-card
-      title: 'HTML Template card'
-      ignore_line_breaks: true
-      content: |
-        Sun state: <b>{{ states('sun.sun') }}</b>, elevation: {{ state_attr('sun.sun','elevation') }}</br>
-        <b>Hello</b> there!<p>General <u>Kenobi!</u></p>
-        <img src="https://i.redd.it/ltxppihy4cyy.jpg" width="70%"/></br>
-        <ha-icon icon="mdi:speaker"></ha-icon> Volume: {{ states('input_number.system_volume') }}%</br>
-        <center><img src="https://vignette.wikia.nocookie.net/starwars/images/f/fa/Modal_Nodes_02.jpg" width="{{ states('input_number.system_volume') }}%"/></center>
+type: custom:html-template-card
+title: Sun
+entities:
+  - sun.sun
+content: |
+  <ha-icon icon="mdi:weather-sunny"></ha-icon>
+  Sun is <b>{{ states('sun.sun') }}</b>, elevation {{ state_attr('sun.sun', 'elevation') }}
 ```
 
-## Manual Installation
-1. Download [*html-template-card.js*](https://github.com/PiotrMachowski/Home-Assistant-Lovelace-HTML-Jinja2-Template-card/raw/master/dist/html-template-card.js) to `/www/custom_lovelace/html_template_card` directory:
-    ```bash
-    mkdir -p www/custom_lovelace/html_template_card
-    cd www/custom_lovelace/html_template_card/
-    wget https://github.com/PiotrMachowski/Home-Assistant-Lovelace-HTML-Jinja2-Template-card/raw/master/dist/html-template-card.js
-    ```
-2. Add card to resources in `ui-lovelace.yaml` or in raw editor if you are using frontend UI editor:
-    ```yaml
-    resources:
-      - url: /local/custom_lovelace/html_template_card/html-template-card.js
-        type: js
-    ```
+Plain content that does not need the template engine:
 
-## Hints
-* To use mdi icon follow example: `<ha-icon icon="mdi:weather-sunny"></ha-icon>`.
-* If content does not contain any template use flag `do_not_parse: true` to increase performance.
-* If content does not contain entity id (e.g. because of loop) you have to provide it manually in `entities` to enable refresh of the card when it will be updated.
-* If you want to enable refreshing for every change in HA use flag `always_update: true`. **WARNING:** this may cause heavy load of browser/HA. Best to use with flag `do_not_parse: true`.
-* To check if your content is correct without changing configuration use *Developer tools*.
-* To use this card as an element of picture-elements card use `picture_elements_mode` parameter.
+```yaml
+type: custom:html-template-card
+do_not_parse: true
+content: "<b>Hello</b> there"
+```
 
+A styled display face with its own `<style>` block, scoped into a shadow root:
 
-<!-- piotrmachowski_support_links_start -->
+```yaml
+type: custom:html-template-card
+shadow: true
+entities:
+  - media_player.receiver
+content: >
+  <style>
+    .face { font-family: ui-monospace, monospace; color: #44d9ff; }
+  </style>
+  <div class="face">{{ state_attr('media_player.receiver', 'source') }}</div>
+```
 
-## Support
+Inside a picture-elements card:
 
-If you want to support my work with a donation you can use one of the following platforms:
+```yaml
+type: picture-elements
+image: /local/floorplan.png
+elements:
+  - type: custom:html-template-card
+    no_card: true
+    style:
+      top: 20%
+      left: 30%
+    content: "{{ states('sensor.kitchen_temperature') }} °C"
+```
 
-<table>
-  <tr>
-    <th>Platform</th>
-    <th>Payment methods</th>
-    <th>Link</th>
-    <th>Comment</th>
-  </tr>
-  <tr>
-    <td>Ko-fi</td>
-    <td>
-      <li>PayPal</li>
-      <li>Credit card</li>
-    </td>
-    <td>
-      <a href='https://ko-fi.com/piotrmachowski' target='_blank'><img height='35px' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' />
-    </td>
-    <td>
-      <li>No fees</li>
-      <li>Single or monthly payment</li>
-    </td>
-  </tr>
-  <tr>
-    <td>buycoffee.to</td>
-    <td>
-      <li>BLIK</li>
-      <li>Bank transfer</li>
-    </td>
-    <td>
-      <a href="https://buycoffee.to/piotrmachowski" target="_blank"><img src="https://buycoffee.to/btn/buycoffeeto-btn-primary.svg" height="35px" alt="Postaw mi kawę na buycoffee.to"></a>
-    </td>
-    <td></td>
-  </tr>
-  <tr>
-    <td>PayPal</td>
-    <td>
-      <li>PayPal</li>
-    </td>
-    <td>
-      <a href="https://paypal.me/PiMachowski" target="_blank"><img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" border="0" alt="PayPal Logo" height="35px" style="height: auto !important;width: auto !important;"></a>
-    </td>
-    <td>
-      <li>No fees</li>
-    </td>
-  </tr>
-  <tr>
-    <td>Revolut</td>
-    <td>
-      <li>Revolut</li>
-      <li>Credit Card</li>
-    </td>
-    <td>
-      <a href="https://revolut.me/314ma" target="_blank"><img src="https://assets.revolut.com/assets/favicons/favicon-32x32.png" height="32px" alt="Revolut"></a>
-    </td>
-    <td>
-      <li>No fees</li>
-    </td>
-  </tr>
-</table>
+## Documentation
 
-### Powered by
-[![PyCharm logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSourceSupport)
+- `docs/README.md` indexes the design, security, operations, decisions, and
+  quality-scale documents.
+- `CHANGELOG.md` lists every behavioural change per release.
 
+## Licence
 
-[ko_fi_shield]: https://img.shields.io/static/v1.svg?label=%20&message=Ko-Fi&color=F16061&logo=ko-fi&logoColor=white
-
-[ko_fi]: https://ko-fi.com/piotrmachowski
-
-[buycoffee_to_shield]: https://shields.io/badge/buycoffee.to-white?style=flat&labelColor=white&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABhmlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw1AUhU9TpaIVh1YQcchQnayIijhKFYtgobQVWnUweemP0KQhSXFxFFwLDv4sVh1cnHV1cBUEwR8QVxcnRRcp8b6k0CLGC4/3cd49h/fuA4R6malmxzigapaRisfEbG5FDLzChxB6MIZ+iZl6Ir2QgWd93VM31V2UZ3n3/Vm9St5kgE8knmW6YRGvE09vWjrnfeIwK0kK8TnxqEEXJH7kuuzyG+eiwwLPDBuZ1BxxmFgstrHcxqxkqMRTxBFF1ShfyLqscN7irJarrHlP/sJgXltOc53WEOJYRAJJiJBRxQbKsBClXSPFRIrOYx7+QcefJJdMrg0wcsyjAhWS4wf/g9+zNQuTE25SMAZ0vtj2xzAQ2AUaNdv+PrbtxgngfwautJa/UgdmPkmvtbTIEdC3DVxctzR5D7jcAQaedMmQHMlPSygUgPcz+qYcELoFulfduTXPcfoAZGhWSzfAwSEwUqTsNY93d7XP7d+e5vx+AIahcq//o+yoAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5wETCy4vFNqLzwAAAVpJREFUOMvd0rFLVXEYxvHPOedKJnKJhrDLuUFREULE7YDCMYj+AydpsCWiaKu29hZxiP4Al4aWwC1EdFI4Q3hqEmkIBI8ZChWXKNLLvS0/Qcza84V3enm/7/s878t/HxGkeTaIGziP+EB918nawu7Dq1d0e1+2J2bepnk2jFEUVVF+qKV51o9neBCaugfge70keoxxUbSWjrQ+4SUyzKZ5NlnDZdzGG7w4DIh+dtZEFntDA98l8S0MYwctNGrYz9WqKJePFLq80g5Sr+EHlnATp+NA+4qLaZ7FfzMrzbMBjGEdq8GrJMZnvAvFC/8wfAwjWMQ8XmMzaW9sdevNRgd3MFhvNpbaG1u/Dk2/hOc4gadVUa7Um425qii/7Z+xH9O4jwW8Cqv24Tru4hyeVEU588cfBMgpPMI9nMFe0BkFzVOYrYqycyQgQJLwTC2cDZCPeF8V5Y7jGb8BUpRicy7OU5MAAAAASUVORK5CYII=
-
-[buycoffee_to]: https://buycoffee.to/piotrmachowski
-
-[buy_me_a_coffee_shield]: https://img.shields.io/static/v1.svg?label=%20&message=Buy%20me%20a%20coffee&color=6f4e37&logo=buy%20me%20a%20coffee&logoColor=white
-
-[buy_me_a_coffee]: https://www.buymeacoffee.com/PiotrMachowski
-
-[paypal_me_shield]: https://img.shields.io/static/v1.svg?label=%20&message=PayPal.Me&logo=paypal
-
-[paypal_me]: https://paypal.me/PiMachowski
-
-[revolut_me_shield]: https://img.shields.io/static/v1.svg?label=%20&message=Revolut&logo=revolut
-
-[revolut_me]: https://revolut.me/314ma
-<!-- piotrmachowski_support_links_end -->
+MIT. The original card is copyright Piotr Machowski; see `LICENSE`.
