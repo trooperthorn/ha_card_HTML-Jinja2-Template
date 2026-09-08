@@ -1,0 +1,52 @@
+{
+  "name": "html-template-card",
+  "version": "2026.09.08.1",
+  "description": "Home Assistant dashboard card that renders a Jinja2 template as HTML",
+  "main": "dist/html-template-card.js",
+  "scripts": {
+    "build": "npm run lint && npm run rollup",
+    "rollup": "rollup -c",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
+    "test": "vitest run",
+    "start": "rollup -c --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trooperthorn/ha_card_HTML-Jinja2-Template.git"
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "hacs"
+  ],
+  "author": "trooperthorn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/trooperthorn/ha_card_HTML-Jinja2-Template/issues"
+  },
+  "homepage": "https://github.com/trooperthorn/ha_card_HTML-Jinja2-Template#readme",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.1",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-terser": "^1.0.0",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^22.20.1",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-prettier": "^5.2.1",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.3.3",
+    "rollup": "^3.29.5",
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.0",
+    "lit": "^3.2.1",
+    "tslib": "^2.7.0"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "tag_prefix": "v",
+  "timezone": "America/Chicago",
+  "release_paths": ["src", "package.json", "package-lock.json", "rollup.config.js", "dist"],
+  "version_fields": [
+    {"path": "package.json", "kind": "json", "key": "version"}
+  ]
+}
