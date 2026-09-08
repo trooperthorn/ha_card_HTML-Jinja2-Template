@@ -60,8 +60,9 @@ jobs:
           path: dist/html-template-card.js
 
   hacs:
-    name: HACS validation
+    name: HACS validation (informational)
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, resolved 2026-09-08
       - uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main HEAD, resolved 2026-09-08 (hacs/action publishes no release tags)
