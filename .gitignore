@@ -1,0 +1,5 @@
+/node_modules/
+/.rpt2_cache/
+/test-results/
+__pycache__/
+*.log

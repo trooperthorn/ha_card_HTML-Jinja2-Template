@@ -1,4 +1,6 @@
 {
   "name": "HTML Jinja2 Template card",
-  "filename": "html-template-card.js"
+  "render_readme": true,
+  "filename": "html-template-card.js",
+  "homeassistant": "2026.9.0"
 }
