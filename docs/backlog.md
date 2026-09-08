@@ -13,8 +13,11 @@
   a font resource before flipping the shadow default, since a missing
   declaration means every browser has been falling back to
   `ui-monospace, monospace`.
-- Verify the editor's `template` selector renders multiline in the current
-  frontend; adjust the schema if the option is ignored.
+- Confirm in the live editor that the `template` selector renders its code
+  editor for `content`. Core's `TemplateSelector` config schema has no
+  `multiline` key, so the option was removed from the editor schema; the
+  selector renders a code editor by design, which is multiline. Unverified
+  in a running frontend.
 
 ## Deferred features
 
@@ -23,7 +26,6 @@
 - Service-call links (upstream issue 13): a `data-action` click delegate on
   the content wrapper that calls `hass.callService`. Deferred because it adds
   an execution path to sanitised content and needs its own threat review.
-- Issue templates for bug reports and feature requests.
 - Visual regression capture against a live instance.
 
 ## Declined

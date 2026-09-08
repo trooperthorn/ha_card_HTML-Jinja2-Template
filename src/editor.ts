@@ -4,7 +4,7 @@ import { HomeAssistant, HtmlTemplateCardConfig } from './types';
 
 const SCHEMA = [
   { name: 'title', selector: { text: {} } },
-  { name: 'content', required: true, selector: { template: { multiline: true } } },
+  { name: 'content', required: true, selector: { template: {} } },
   { name: 'entities', selector: { entity: { multiple: true } } },
   {
     type: 'grid',
