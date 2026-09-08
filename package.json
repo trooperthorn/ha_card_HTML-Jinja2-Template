@@ -1,6 +1,6 @@
 {
   "name": "html-template-card",
-  "version": "2026.09.08.1",
+  "version": "2026.09.08.2",
   "description": "Home Assistant dashboard card that renders a Jinja2 template as HTML",
   "main": "dist/html-template-card.js",
   "scripts": {
